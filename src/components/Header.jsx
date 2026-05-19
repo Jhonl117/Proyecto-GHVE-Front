@@ -49,7 +49,7 @@ const Header = ({ onMenuClick, onToggleSidebar, sidebarOpen }) => {
         </button>
 
         <div className="text-center lg:text-left">
-          <h1 className="text-lg font-bold text-gray-800">Gestión Humana</h1>
+          <h1 className="text-lg font-bold text-gray-800">Gestión Humana VE</h1>
           <p className="text-xs text-gray-500 tracking-widest">SISTEMA ADMINISTRATIVO</p>
         </div>
       </div>

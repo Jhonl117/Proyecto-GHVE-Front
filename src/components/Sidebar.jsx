@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import Swal from 'sweetalert2';
+
+import logoEmpresa from '../assets/VE-sin-fondo.png';
+
 import { 
   Users, 
   ChevronDown,
@@ -88,9 +91,13 @@ const Sidebar = ({ isOpen, mobileOpen, onMobileClose }) => {
         }`}
       >
         <div className="flex items-center justify-center h-20 border-b border-primary-100 px-4">
-          <span className={`font-bold text-gray-700 transition-all duration-300 ${isOpen ? 'text-lg text-center' : 'text-xs'}`}>
-            Gestión Humana
-          </span>
+          <img
+            src={logoEmpresa}
+            alt="Logo empresa"
+            className={`transition-all duration-300 object-contain ${
+              isOpen ? 'w-40 h-20' : 'w-14 h-14'
+            }`}
+          />
         </div>
 
         {/* Navigation */}
@@ -202,7 +209,7 @@ const Sidebar = ({ isOpen, mobileOpen, onMobileClose }) => {
         </button>
 
         <div className="flex items-center justify-center h-20 border-b border-primary-100">
-          <span className="font-bold text-gray-700 text-lg">Gestión Humana</span>
+          <span className="font-bold text-gray-700 text-lg">Gestión Humana VE</span>
         </div>
 
         {/* Navigation */}
