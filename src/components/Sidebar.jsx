@@ -209,7 +209,13 @@ const Sidebar = ({ isOpen, mobileOpen, onMobileClose }) => {
         </button>
 
         <div className="flex items-center justify-center h-20 border-b border-primary-100">
-          <span className="font-bold text-gray-700 text-lg">Gestión Humana VE</span>
+          <img
+            src={logoEmpresa}
+            alt="Logo empresa"
+            className={`transition-all duration-300 object-contain ${
+              isOpen ? 'w-40 h-20' : 'w-14 h-14'
+            }`}
+          />
         </div>
 
         {/* Navigation */}
