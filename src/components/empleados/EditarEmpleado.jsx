@@ -7,7 +7,7 @@ import alerts from '../../utils/alerts';
 
 // Listas de referencia (se cargarán dinámicamente)
 const EPS_LIST = [
-  'SURA', 'NUEVA EPS', 'SANITAS', 'COMPENSAR', 'SALUD TOTAL'
+  'SURA', 'NUEVA EPS', 'SANITAS', 'COMPENSAR', 'SALUD TOTAL', 'SAVIA SALUD', 'COOSALUD'
 ];
 
 const FONDOS_LIST = [

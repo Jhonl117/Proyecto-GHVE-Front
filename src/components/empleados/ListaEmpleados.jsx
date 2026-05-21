@@ -26,10 +26,15 @@ const ListaEmpleados = () => {
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [activeFilter, setActiveFilter] = useState('todos');
+
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedIds, setSelectedIds] = useState([]);
-
+  
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -170,12 +175,52 @@ const ListaEmpleados = () => {
     }
   };
 
-  const filteredEmpleados = empleados.filter(emp =>
-    emp.nombre_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.cedula?.includes(searchTerm) ||
-    emp.cargo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.empresa?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEmpleados = empleados.filter((emp) => {
+
+    const search = searchTerm.toLowerCase();
+
+    if (!search) return true;
+
+    switch (activeFilter) {
+
+      case 'nombre':
+        return emp.nombre_completo?.toLowerCase().includes(search);
+
+      case 'cedula':
+        return emp.cedula?.includes(search);
+
+      case 'cargo':
+        return emp.cargo?.toLowerCase().includes(search);
+
+      case 'empresa':
+        return emp.empresa?.toLowerCase().includes(search);
+
+      case 'eps':
+        return emp.eps?.toLowerCase().includes(search);
+
+      case 'fondo_pension':
+        return emp.fondo_pension?.toLowerCase().includes(search);
+
+      case 'fecha_nacimiento':
+        return emp.fecha_nacimiento?.split('T')[0].includes(search);
+
+      case 'fecha_ingreso':
+        return emp.fecha_ingreso?.split('T')[0].includes(search);  
+
+      case 'todos':
+      default:
+        return (
+          emp.nombre_completo?.toLowerCase().includes(search) ||
+          emp.cedula?.includes(search) ||
+          emp.cargo?.toLowerCase().includes(search) ||
+          emp.empresa?.toLowerCase().includes(search) ||
+          emp.eps?.toLowerCase().includes(search) ||
+          emp.fondo_pension?.toLowerCase().includes(search) ||
+          emp.fecha_nacimiento?.split('T')[0].includes(search) ||
+          emp.fecha_ingreso?.split('T')[0].includes(search)
+        );
+    }
+  });
 
   const totalPages = Math.ceil(filteredEmpleados.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
@@ -215,16 +260,60 @@ const ListaEmpleados = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar por nombre, cédula o cargo..."
+                placeholder={`Buscar por ${
+                  activeFilter === 'todos'
+                    ? 'todos los campos'
+                    : activeFilter.replace('_', ' ')
+                }...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500 transition-all"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
+            <div className="relative">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
+            >
               <Filter className="w-4 h-4" />
-              <span className="hidden md:inline text-sm font-medium">Filtros</span>
+              <span className="hidden md:inline text-sm font-medium">
+                Filtros
+              </span>
             </button>
+
+            {showFilters && (
+              <div className="absolute top-12 right-0 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+
+                {[
+                  { key: 'todos', label: 'Todos' },
+                  { key: 'nombre', label: 'Nombre' },
+                  { key: 'cedula', label: 'Cédula' },
+                  { key: 'cargo', label: 'Cargo' },
+                  { key: 'empresa', label: 'Empresa' },
+                  { key: 'eps', label: 'EPS' },
+                  { key: 'fondo_pension', label: 'Fondo Pensión' },
+                  { key: 'fecha_nacimiento', label: 'Fecha Nacimiento' },
+                  { key: 'fecha_ingreso', label: 'Fecha Ingreso' }
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => {
+                      setActiveFilter(item.key);
+                      setShowFilters(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 text-sm transition-colors
+                      ${activeFilter === item.key
+                        ? 'bg-primary-50 text-primary-600'
+                        : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+
+              </div>
+            )}
+          </div>
           </div>
 
           {/* Right Group: Actions */}
