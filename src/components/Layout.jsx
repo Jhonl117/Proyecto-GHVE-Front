@@ -26,7 +26,7 @@ const Layout = () => {
       />
       
       {/* Main Content */}
-      <div className={`flex flex-col flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+      <div className={`flex flex-col flex-1 min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         {/* Header */}
         <Header 
           onMenuClick={toggleMobileMenu}

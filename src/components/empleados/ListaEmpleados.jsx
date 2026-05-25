@@ -368,8 +368,8 @@ const ListaEmpleados = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden w-full">
+        <div className="overflow-x-auto w-full">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -389,7 +389,7 @@ const ListaEmpleados = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha Nacimiento</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fondo Pensión</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Celular</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase sticky right-0 bg-gray-50 border-l border-gray-200">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -411,7 +411,7 @@ const ListaEmpleados = () => {
                   <td className="px-4 py-3 text-sm text-gray-900">{formatDate(empleado.fecha_nacimiento)}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{empleado.fondo_pension}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{empleado.celular}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.06)]">
                     <div className="flex items-center justify-center gap-2">
                       <button 
                         onClick={() => navigate(`/empleados/detalleEmpleado/${empleado.id}`)}
