@@ -4,7 +4,8 @@ import {
   Search, 
   Filter, 
   UserPlus, 
-  FileSpreadsheet, 
+  FileSpreadsheet,
+  FileDown, 
   FileText,
   Edit, 
   Trash2, 
@@ -62,6 +63,107 @@ const ListaEmpleados = () => {
     }
     exportImport.generatePDF(empleados);
   };
+
+    const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio',
+               'agosto','septiembre','octubre','noviembre','diciembre'];
+
+const getExcelFileName = () => {
+    const base = 'consolidado_empleados_';
+    const hoy  = new Date().toISOString().split('T')[0];
+    const mes  = parseInt(searchTerm);
+    const mesValido = !isNaN(mes) && mes >= 1 && mes <= 12;
+
+    if (activeFilter === 'fecha_ingreso' && mesValido)
+      return `${base}fecha_ingreso_${MESES[mes - 1]}_${hoy}.xlsx`;
+
+    if (activeFilter === 'fecha_nacimiento' && mesValido)
+      return `${base}cumpleaños_${MESES[mes - 1]}_${hoy}.xlsx`;
+
+    if (activeFilter !== 'todos')
+      return `${base}${activeFilter}_${hoy}.xlsx`;
+
+    return `${base}${hoy}.xlsx`;
+  };
+
+  const handleExportExcel = async () => {
+    if (filteredEmpleados.length === 0) {
+      alerts.error('Error', 'No hay datos para exportar.');
+      return;
+    }
+
+    const ExcelJS = (await import('exceljs')).default;
+    const workbook  = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Empleados');
+
+    // ── Encabezados ────────────────────────────────────────────────────────────
+    const headers = ['#','Cédula','Nombre Completo','Fecha Ingreso','Cargo',
+                    'Empresa','Fecha Nacimiento','EPS','Fondo Pensión',
+                    'Celular','Correo','Estado'];
+
+    worksheet.columns = headers.map((header, i) => ({
+      header,
+      key: String(i),
+      width: Math.max(header.length, 14) + 2,
+    }));
+
+    // Estilo de encabezados
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.font      = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border    = {
+        top:    { style: 'thin', color: { argb: 'FFCBD5E1' } },
+        left:   { style: 'thin', color: { argb: 'FFCBD5E1' } },
+        bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+        right:  { style: 'thin', color: { argb: 'FFCBD5E1' } },
+      };
+    });
+
+    // ── Filas de datos ─────────────────────────────────────────────────────────
+    filteredEmpleados.forEach((emp, index) => {
+      const row = worksheet.addRow([
+        index + 1,
+        emp.cedula             || '-',
+        emp.nombre_completo    || '-',
+        formatDate(emp.fecha_ingreso),
+        emp.cargo              || '-',
+        emp.empresa            || '-',
+        formatDate(emp.fecha_nacimiento),
+        emp.eps                || '-',
+        emp.fondo_pension      || '-',
+        emp.celular            || '-',
+        emp.correo_electronico || '-',
+        emp.estado ? 'Activo' : 'Inactivo',
+      ]);
+
+      const esPar = index % 2 === 0;
+      row.eachCell((cell) => {
+        cell.alignment = { vertical: 'middle' };
+        cell.fill = {
+          type: 'pattern', pattern: 'solid',
+          fgColor: { argb: esPar ? 'FFFFFFFF' : 'FFF8FAFC' },
+        };
+        cell.border = {
+          top:    { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          left:   { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+          right:  { style: 'thin', color: { argb: 'FFCBD5E1' } },
+        };
+      });
+    });
+
+    // ── Descargar ──────────────────────────────────────────────────────────────
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob   = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href     = url;
+    link.download = getExcelFileName();
+    link.click();
+    URL.revokeObjectURL(url);
+  };  
 
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];
@@ -201,11 +303,45 @@ const ListaEmpleados = () => {
       case 'fondo_pension':
         return emp.fondo_pension?.toLowerCase().includes(search);
 
-      case 'fecha_nacimiento':
-        return emp.fecha_nacimiento?.split('T')[0].includes(search);
+      case 'fecha_nacimiento': {
+        const mesBuscado = parseInt(search);
 
-      case 'fecha_ingreso':
-        return emp.fecha_ingreso?.split('T')[0].includes(search);  
+        // Si escribió un número válido del 1 al 12
+        if (!isNaN(mesBuscado) && mesBuscado >= 1 && mesBuscado <= 12) {
+
+          if (!emp.fecha_nacimiento) return false;
+
+          const fecha = new Date(emp.fecha_nacimiento);
+          const mesEmpleado = fecha.getMonth() + 1;
+
+          return mesEmpleado === mesBuscado;
+        }
+
+        // búsqueda normal si no es número
+        return emp.fecha_nacimiento
+          ?.split('T')[0]
+          .includes(search);
+      }
+
+      case 'fecha_ingreso': {
+        const mesBuscado = parseInt(search);
+
+        // Si escribió un número válido del 1 al 12
+        if (!isNaN(mesBuscado) && mesBuscado >= 1 && mesBuscado <= 12) {
+
+          if (!emp.fecha_ingreso) return false;
+
+          const fecha = new Date(emp.fecha_ingreso);
+          const mesEmpleado = fecha.getMonth() + 1;
+
+          return mesEmpleado === mesBuscado;
+        }
+
+        // búsqueda normal si no es número
+        return emp.fecha_ingreso
+          ?.split('T')[0]
+          .includes(search);
+      }  
 
       case 'todos':
       default:
@@ -213,11 +349,13 @@ const ListaEmpleados = () => {
           emp.nombre_completo?.toLowerCase().includes(search) ||
           emp.cedula?.includes(search) ||
           emp.cargo?.toLowerCase().includes(search) ||
+          emp.fecha_ingreso?.split('T')[0].includes(search) ||
           emp.empresa?.toLowerCase().includes(search) ||
           emp.eps?.toLowerCase().includes(search) ||
           emp.fondo_pension?.toLowerCase().includes(search) ||
           emp.fecha_nacimiento?.split('T')[0].includes(search) ||
-          emp.fecha_ingreso?.split('T')[0].includes(search)
+          emp.correo_electronico?.split('T')[0].includes(search) 
+          
         );
     }
   });
@@ -293,7 +431,8 @@ const ListaEmpleados = () => {
                   { key: 'eps', label: 'EPS' },
                   { key: 'fondo_pension', label: 'Fondo Pensión' },
                   { key: 'fecha_nacimiento', label: 'Fecha Nacimiento' },
-                  { key: 'fecha_ingreso', label: 'Fecha Ingreso' }
+                  { key: 'fecha_ingreso', label: 'Fecha Ingreso' },
+                  { key: 'correo_electronico', label: 'Correo' }
                 ].map((item) => (
                   <button
                     key={item.key}
@@ -346,6 +485,16 @@ const ListaEmpleados = () => {
                 <FileSpreadsheet className="w-5 h-5" />
               </button>
               <div className="w-px h-4 bg-gray-200 mx-1"></div>
+
+                {/* ← NUEVO Botón exportar Excel */}
+              <button
+                onClick={handleExportExcel}
+                className="p-2 text-emerald-700 hover:bg-white hover:shadow-sm rounded-lg transition-all"
+                title={`Exportar Excel — ${filteredEmpleados.length} registros`}
+              >
+                <FileDown className="w-5 h-5" />   {/* ← diferente */}
+              </button>
+
               <button 
                 onClick={handleExportPDF}
                 className="p-2 text-red-500 hover:bg-white hover:shadow-sm rounded-lg transition-all"
@@ -384,11 +533,14 @@ const ListaEmpleados = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">#</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cédula</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nombres</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha Ingreso</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cargo</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Empresa</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha Nacimiento</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">EPS</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fondo Pensión</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Celular</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Correo</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase sticky right-0 bg-gray-50 border-l border-gray-200">Acciones</th>
               </tr>
             </thead>
@@ -406,11 +558,14 @@ const ListaEmpleados = () => {
                   <td className="px-4 py-3 text-sm text-gray-900">{startIndex + index + 1}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{empleado.cedula}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{empleado.nombre_completo}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{formatDate(empleado.fecha_ingreso)}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{empleado.cargo}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{empleado.empresa}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{formatDate(empleado.fecha_nacimiento)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{empleado.fondo_pension}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{empleado.eps || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{empleado.fondo_pension || '-'}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{empleado.celular}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{empleado.correo_electronico || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.06)]">
                     <div className="flex items-center justify-center gap-2">
                       <button 
