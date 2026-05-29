@@ -56,7 +56,7 @@ const EditarEmpleado = () => {
   const [fecha_vencimiento_contrato, setFecha_vencimiento_contrato] = useState('');
   const [salario_base, setSalario_base] = useState('');
 
-  const PARENTESCOS_LIST = ["Herman@", "Tí@", "Prim@", "Amig@", "Espos@", "Otr@"];
+  const PARENTESCOS_LIST = ["ABUELA","MADRE", "ABUELO", "PADRE", "HERMANO","TIO", "HERMANA", "PRIMA", "TÍA", "AMIGO", "AMIGA", "PAREJA", "Otr@"];
 
   useEffect(() => {
     cargarDatos();
@@ -74,13 +74,25 @@ const EditarEmpleado = () => {
       setCelular(data.celular || "");
       setCorreo_electronico(data.correo_electronico || "");
       setContacto_emergencia(data.contacto_emergencia || "");
-      setParentesco(data.parentesco || "");
+      setParentesco(
+        data.parentesco
+          ? data.parentesco
+              .trim()
+              .toUpperCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+          : ""
+      );
       setParentesco_Otro(data.parentesco_otro || "");
       setTelefono_contacto(data.telefono_contacto || "");
       setCargo(data.cargo || "");
       setEmpresa(data.empresa || "");
       setEps(data.eps || "");
-      setFondo_pension(data.fondo_pension || "");
+      setFondo_pension(
+        data.fondo_pension
+          ? data.fondo_pension.trim().toUpperCase()
+          : ""
+      );
       setTipo_contrato(data.tipo_contrato || 'Obra o Labor');
       setFecha_vencimiento_contrato(data.fecha_vencimiento_contrato ? data.fecha_vencimiento_contrato.split('T')[0] : "");
       setSalario_base(data.salario_base || "");

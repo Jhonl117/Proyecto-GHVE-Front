@@ -69,7 +69,7 @@ const CrearEmpleado = () => {
   const [fecha_vencimiento_contrato, setFecha_vencimiento_contrato] = useState('');
   const [salario_base, setSalario_base] = useState('');
 
-  const PARENTESCOS_LIST = ["Herman@", "Tí@", "Prim@", "Amig@", "Espos@", "Otr@"];
+  const PARENTESCOS_LIST = ["ABUELA","MADRE", "ABUELO", "PADRE", "HERMANO","TIO", "PRIMA", "HERMANA","PRIMA", "TÍA", "AMIGO", "AMIGA", "PAREJA", "Otr@"];
 
   const handleNumericChange = (setter, value, maxLength, fieldName) => {
     const numericValue = value.replace(/[^0-9]/g, "");
