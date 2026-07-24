@@ -21,6 +21,7 @@ import empleadoService from '../../services/empleadoService';
 import Spinner from '../ui/Spinner';
 import alerts from '../../utils/alerts';
 import exportImport from '../../utils/exportImport';
+import { validarRegistros } from '../../utils/validarEmpleadosExcl';
 
 const ListaEmpleados = () => {
   const navigate = useNavigate();
@@ -166,37 +167,102 @@ const getExcelFileName = () => {
   };  
 
   const handleImportExcel = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
 
-    try {
-      alerts.loading('Procesando archivo...');
-      const data = await exportImport.importFromExcel(file);
-      
-      if (data.length === 0) {
-        alerts.error('Error', 'El archivo Excel parece estar vacío o tiene un formato incorrecto.');
+  try {
+    alerts.loading('Leyendo archivo...');
+    const data = await exportImport.importFromExcel(file);
+
+    if (data.length === 0) {
+      alerts.error('Archivo vacío', 'El Excel no tiene registros o el formato es incorrecto.');
+      return;
+    }
+
+    // Recargar empleados frescos de la BD antes de validar
+    alerts.loading('Verificando duplicados...');
+    const empleadosActualizados = await empleadoService.getAllEmpleados();
+
+    // Validar cada fila
+    const { validos, errores } = validarRegistros(data, empleadosActualizados);
+
+    if (errores.length > 0) {
+      const listaHTML = errores.map(({ fila, nombre, cedula, errores: errs }) => `
+        <div style="margin-bottom:10px;text-align:left;border-bottom:1px solid #f0f0f0;padding-bottom:8px">
+          <strong style="color:#DC2626">Fila ${fila} — ${nombre} (C.C. ${cedula})</strong><br/>
+          ${errs.map(e => `<span style="color:#6B7280;font-size:13px">• ${e}</span>`).join('<br/>')}
+        </div>
+      `).join('');
+
+      if (validos.length === 0) {
+        // Todos fallaron
+        await Swal.fire({
+          icon             : 'error',
+          title            : `${errores.length} registros con errores`,
+          html             : `<div style="max-height:340px;overflow-y:auto">${listaHTML}</div>`,
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#DC2626',
+          width            : '600px',
+        });
         return;
       }
 
+      // Algunos válidos, algunos con error
+      const result = await Swal.fire({
+        icon : 'warning',
+        title: 'Se encontraron registros con errores',
+        html : `
+          <p style="margin-bottom:12px">
+            <strong style="color:#16A34A">${validos.length} registros válidos</strong> y 
+            <strong style="color:#DC2626">${errores.length} con errores</strong>.
+          </p>
+          <div style="max-height:260px;overflow-y:auto;border:1px solid #FEE2E2;
+                      border-radius:8px;padding:10px;background:#FFF9F9">
+            ${listaHTML}
+          </div>
+          <p style="margin-top:12px;font-size:13px;color:#6B7280">
+            ¿Deseas importar solo los ${validos.length} válidos e ignorar los que tienen errores?
+          </p>
+        `,
+        showCancelButton  : true,
+        confirmButtonText : `Sí, importar ${validos.length} válidos`,
+        cancelButtonText  : 'Cancelar todo',
+        confirmButtonColor: '#4F46E5',
+        cancelButtonColor : '#6B7280',
+        width             : '620px',
+      });
+
+      if (!result.isConfirmed) return;
+
+    } else {
+      // Todo válido
       const result = await alerts.confirm(
-        '¿Deseas importar estos empleados?',
-        `Se han encontrado ${data.length} registros en el archivo.`,
+        '¿Importar empleados?',
+        `${validos.length} registros listos sin errores.`,
         'Sí, importar todo'
       );
-
-      if (result.isConfirmed) {
-        alerts.loading('Guardando empleados...');
-        await empleadoService.bulkCreate(data);
-        alerts.success('¡Importación Exitosa!', `${data.length} empleados han sido registrados.`);
-        fetchEmpleados(); // Recargar lista
-      }
-    } catch (error) {
-      console.error('Error importing:', error);
-      alerts.error('Error', error);
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = ''; // Limpiar input
+      if (!result.isConfirmed) return;
     }
-  };
+
+    // Importar solo los válidos
+    alerts.loading('Guardando empleados...');
+    await empleadoService.bulkCreate(validos);
+    alerts.success(
+      '¡Importación exitosa!',
+      `${validos.length} empleados registrados.${errores.length > 0 ? ` ${errores.length} omitidos por errores.` : ''}`
+    );
+    fetchEmpleados();
+
+  } catch (error) {
+    console.error('Error importing:', error);
+    const mensajeBackend = error?.response?.data?.detalles?.join('\n')
+      || error?.response?.data?.msg
+      || 'No se pudo procesar el archivo.';
+    alerts.error('Error en la importación', mensajeBackend);
+  } finally {
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+};
 
   const handleToggleEstado = async (id, estadoActual) => {
     const action = estadoActual ? 'inactivar' : 'activar';
@@ -485,7 +551,7 @@ const getExcelFileName = () => {
                 <FileSpreadsheet className="w-5 h-5" />
               </button>
               <div className="w-px h-4 bg-gray-200 mx-1"></div>
-
+              
                 {/* ← NUEVO Botón exportar Excel */}
               <button
                 onClick={handleExportExcel}
@@ -594,7 +660,7 @@ const getExcelFileName = () => {
                         className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all"
                         title="Eliminar"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={18} /> 
                       </button>
                     </div>
                   </td>
@@ -625,7 +691,7 @@ const getExcelFileName = () => {
               {startIndex + 1} - {Math.min(startIndex + rowsPerPage, filteredEmpleados.length)} of {filteredEmpleados.length}
             </span>
           </div>
-
+                
           <div className="flex items-center gap-1">
             <button
               onClick={() => setCurrentPage(1)}

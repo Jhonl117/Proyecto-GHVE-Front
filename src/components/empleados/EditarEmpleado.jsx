@@ -6,12 +6,10 @@ import Spinner from '../ui/Spinner';
 import alerts from '../../utils/alerts';
 
 // Listas de referencia (se cargarán dinámicamente)
-const EPS_LIST = [
-  'SURA', 'NUEVA EPS', 'SANITAS', 'COMPENSAR', 'SALUD TOTAL', 'SAVIA SALUD', 'COOSALUD'
-];
+
 
 const FONDOS_LIST = [
-  'PORVENIR', 'COLPENSIONES', 'PROTECCION', 'SKANDIA'
+  'PORVENIR', 'COLPENSIONES', 'PROTECCION', 'SKANDIA', 'COLFONDOS'
 ];
 
 const CONTRATOS_LIST = [
@@ -25,6 +23,7 @@ const EditarEmpleado = () => {
   const [saving, setSaving] = useState(false);
   const [cargosList, setCargosList] = useState([]);
   const [empresasList, setEmpresasList] = useState([]);
+  const [epsList, setEpsList] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [tipoMensaje, setTipoMensaje] = useState('success');
   const [formErrors, setFormErrors] = useState({});
@@ -107,12 +106,14 @@ const EditarEmpleado = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const [cargos, empresas] = await Promise.all([
+        const [cargos, empresas, eps] = await Promise.all([
           empleadoService.getCargos(),
-          empleadoService.getEmpresas()
+          empleadoService.getEmpresas(),
+          empleadoService.getEps()
         ]);
         setCargosList(cargos);
         setEmpresasList(empresas);
+        setEpsList(eps);
       } catch (error) {
         console.error("Error al cargar configuración:", error);
       }
@@ -167,14 +168,14 @@ const EditarEmpleado = () => {
 
     const empleadoData = {
       cedula,
-      nombre_completo,
+      nombre_completo: nombre_completo?.toUpperCase(),
       fecha_ingreso,
       fecha_nacimiento,
       celular,
       correo_electronico,
-      contacto_emergencia,
+      contacto_emergencia: contacto_emergencia?.toUpperCase(),
       parentesco,
-      parentesco_otro,
+      parentesco_otro: parentesco?.toUpperCase(),
       telefono_contacto,
       cargo,
       empresa,
@@ -373,7 +374,7 @@ const EditarEmpleado = () => {
                 <label className="block text-xs font-medium text-gray-500 mb-1">EPS</label>
                 <select value={eps} onChange={(e) => setEps(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
                   <option value="">Seleccione...</option>
-                  {EPS_LIST.map(item => <option key={item} value={item}>{item}</option>)}
+                  {epsList.map(item => <option key={item.id} value={item.nombre}>{item.nombre}</option>)}
                 </select>
               </div>
               <div>

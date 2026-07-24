@@ -28,14 +28,6 @@ const menuItems = [
     path: '/empleados/listaEmpleados'
   },
   {
-    title: 'Nómina',
-    icon: CreditCard,
-    children: [
-      { title: 'Liquidar Pago', path: '/nomina/liquidar' },
-      { title: 'Historial de Pagos', path: '/nomina/historial' }
-    ]
-  },
-  {
     title: 'Configuración',
     icon: Settings,
     path: '/configuracion'

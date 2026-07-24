@@ -1,6 +1,6 @@
 const exportImport = {
   /**
-   * Genera un PDF premium con la lista de empleados
+   * Genera un PDF premium con la lista de empleados                                              
    */
   generatePDF: (empleados) => {
     const { jsPDF } = window.jspdf;
@@ -277,7 +277,8 @@ const exportImport = {
           const parseDate = (val) => {
             if (!val) return "";
             if (typeof val === "number") {
-              const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+              // Fórmula correcta con UTC para evitar desfase por zona horaria
+              const date = new Date(Date.UTC(1899, 11, 30) + val * 86400000);
               return date.toISOString().split("T")[0];
             }
             const str = val.toString().trim();
@@ -331,10 +332,10 @@ const exportImport = {
             .map((row) => {
               if (!row || row.length === 0) return null;
               if (!row[idx.cedula] && !row[idx.nombre]) return null;
-
+                
               return {
                 cedula: row[idx.cedula]
-                  ? row[idx.cedula].toString().trim()
+                  ? row[idx.cedula].toString().trim().split('.')[0]
                   : "",
                 nombre_completo: row[idx.nombre]
                   ? row[idx.nombre].toString().trim()
@@ -346,11 +347,11 @@ const exportImport = {
                 eps: row[idx.eps] || "",
                 fondo_pension: row[idx.fondo] || "",
                 celular: row[idx.celular]
-                  ? row[idx.celular].toString().trim()
+                  ? row[idx.celular].toString().trim().split('.')[0]
                   : "",
                 telefono_contacto: row[idx.emergencia]
-                  ? row[idx.emergencia].toString().trim()
-                  : "",
+                  ? row[idx.emergencia].toString().trim().split('.')[0]
+                  : "", 
                 parentesco: row[idx.parentesco] || "",
                 correo_electronico: row[idx.correo]
                   ? row[idx.correo].toString().trim()

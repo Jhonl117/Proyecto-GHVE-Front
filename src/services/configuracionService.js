@@ -37,6 +37,27 @@ const configuracionService = {
     return response.data;
   },
 
+  // EPS
+getEps: async () => {
+  const response = await apiClient.get('/eps');
+  return response.data;
+},
+
+createEps: async (data) => {
+  const response = await apiClient.post('/eps', data);
+  return response.data;
+},
+
+updateEps: async (id, data) => {
+  const response = await apiClient.put(`/eps/${id}`, data);
+  return response.data;
+},
+
+deleteEps: async (id) => {
+  const response = await apiClient.delete(`/eps/${id}`);
+  return response.data;
+},
+
   // CONFIGURACIÓN DE REPORTES
   getReportConfigs: async () => {
     const response = await apiClient.get('/config-reportes');

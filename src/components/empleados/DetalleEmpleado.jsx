@@ -115,7 +115,7 @@ const DetalleEmpleado = () => {
           </div>
         </div>
       </div>
-
+           
       {/* Información detallada */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Información Personal */}
@@ -167,7 +167,7 @@ const DetalleEmpleado = () => {
             </div>
           </div>
         </div>
-
+        
         {/* Información Laboral */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -247,11 +247,11 @@ const DetalleEmpleado = () => {
               <p className="text-sm text-gray-500">Fondo de Pensión</p>
               <p className="font-medium text-gray-900">{empleado.fondo_pension || '-'}</p>
             </div>
-
-
+  
+              
           </div>
         </div>
-
+            
         {/* Contacto de Emergencia */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -267,9 +267,13 @@ const DetalleEmpleado = () => {
 
             <div>
               <p className="text-sm text-gray-500">Parentesco</p>
-              <p className="font-medium text-gray-900">{empleado.parentesco || 'No especificado'}</p>
+              <p className="font-medium text-gray-900">
+                {empleado.parentesco === 'Otr@' && empleado.parentesco_otro
+                  ? empleado.parentesco_otro
+                  : empleado.parentesco || 'No especificado'}
+              </p>
             </div>
-
+                  
             <div>
               <p className="text-sm text-gray-500">Teléfono</p>
               <p className="font-medium text-gray-900">{empleado.telefono_contacto || 'No especificado'}</p>

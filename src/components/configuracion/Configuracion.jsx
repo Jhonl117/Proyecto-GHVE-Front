@@ -25,11 +25,13 @@ const Configuracion = () => {
   const [loading, setLoading] = useState(true);
   const [cargos, setCargos] = useState([]);
   const [empresas, setEmpresas] = useState([]);
+  const [eps, setEps] = useState([]);
   const [reportConfigs, setReportConfigs] = useState([]);
   
   // Modals
   const [showCargoModal, setShowCargoModal] = useState(false);
   const [showEmpresaModal, setShowEmpresaModal] = useState(false);
+  const [showEpsModal, setShowEpsModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   
@@ -38,6 +40,9 @@ const Configuracion = () => {
   
   // Empresa Form
   const [empresaName, setEmpresaName] = useState('');
+
+    // EPS Form
+  const [epsName, setEpsName] = useState('');
   
   // Report Form
   const [reportForm, setReportForm] = useState({
@@ -56,14 +61,16 @@ const Configuracion = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [cargosData, empresasData, reportsData] = await Promise.all([
+      const [cargosData, empresasData, epsData, reportsData] = await Promise.all([
         configuracionService.getCargos(),
         configuracionService.getEmpresas(),
+        configuracionService.getEps(),
         configuracionService.getReportConfigs()
       ]);
       setCargos(cargosData);
       setEmpresas(empresasData);
-      
+      setEps(epsData);
+
       // Parsear empresas de JSON string a array
       const parsedReports = reportsData.map(r => ({
         ...r,
@@ -153,6 +160,92 @@ const Configuracion = () => {
       }
     }
   };
+
+   // --- EMPRESA HANDLERS ---
+   const handleOpenEpsModal = (epsItem = null) => {
+        setEditingItem(epsItem);
+
+        setEpsName(epsItem ? epsItem.nombre : '');
+
+        setShowEpsModal(true);
+    };
+
+
+    const handleSaveEps = async (e) => {
+        e.preventDefault();
+
+        if (!epsName.trim()) return;
+
+        try {
+
+            if (editingItem) {
+
+                await configuracionService.updateEps(
+                    editingItem.id,
+                    { nombre: epsName }
+                );
+
+                alerts.success(
+                    "Actualizado",
+                    "EPS actualizada correctamente."
+                );
+
+            } else {
+
+                await configuracionService.createEps({
+                    nombre: epsName
+                });
+
+                alerts.success(
+                    "Creada",
+                    "Nueva EPS creada correctamente."
+                );
+            }
+
+            setShowEpsModal(false);
+
+            fetchData();
+
+        } catch (error) {
+
+            alerts.error(
+                "Error",
+                error.response?.data?.msg ||
+                "No se pudo guardar."
+            );
+        }
+    };
+
+    const handleDeleteEps = async (id) => {
+
+        const result = await alerts.confirm(
+            "¿Eliminar EPS?",
+            "Esta acción no se puede deshacer."
+        );
+
+        if (result.isConfirmed) {
+
+            try {
+
+                await configuracionService.deleteEps(id);
+
+                alerts.success(
+                    "Eliminada",
+                    "EPS eliminada."
+                );
+
+                fetchData();
+
+            } catch {
+
+                alerts.error(
+                    "Error",
+                    "No se pudo eliminar."
+                );
+            }
+        }
+    };
+
 
   // --- REPORT HANDLERS ---
   const handleOpenReportModal = (config = null) => {
@@ -279,7 +372,22 @@ const Configuracion = () => {
         <button onClick={() => setActiveTab('empresas')} className={`px-6 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'empresas' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
           <div className="flex items-center gap-2"><Building2 className="w-4 h-4" /> Empresas</div>
         </button>
-        <button onClick={() => setActiveTab('reportes')} className={`px-6 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'reportes' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+
+        <button
+          onClick={() => setActiveTab('eps')}
+          className={`px-6 py-3 text-sm font-medium transition-all border-b-2 ${
+              activeTab === 'eps'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+      >
+          <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              EPS
+          </div>
+      </button>
+
+              <button onClick={() => setActiveTab('reportes')} className={`px-6 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'reportes' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
           <div className="flex items-center gap-2"><Bell className="w-4 h-4" /> Reportes Aniversario</div>
         </button>
       </div>
@@ -323,6 +431,28 @@ const Configuracion = () => {
                 </div>
               ))}
               {empresas.length === 0 && <p className="text-gray-500 text-sm italic col-span-full py-8 text-center">No hay empresas configuradas.</p>}
+            </div>
+          </div>
+        )}
+
+
+        {activeTab === 'eps' && (
+          <div className="p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-800">Listado de Eps</h3>
+              <button onClick={() => handleOpenEpsModal()} className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all text-sm font-bold shadow-md shadow-primary-100"><Plus className="w-4 h-4" /> Nueva EPS</button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {eps.map(eps => (
+                <div key={eps.id} className="group flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-transparent hover:border-primary-200 hover:bg-white transition-all">
+                  <span className="font-medium text-gray-700 uppercase text-sm">{eps.nombre}</span>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => handleOpenEpsModal(eps)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDeleteEps(eps.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              ))}
+              {eps.length === 0 && <p className="text-gray-500 text-sm italic col-span-full py-8 text-center">No hay EPS configuradas.</p>}
             </div>
           </div>
         )}
@@ -422,6 +552,28 @@ const Configuracion = () => {
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => setShowEmpresaModal(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-xl">Cancelar</button>
+                <button type="submit" className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-bold shadow-md shadow-primary-200"><Save className="w-4 h-4" /> Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EPS Modal */}
+      {showEpsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in duration-300">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-gray-900">{editingItem ? 'Editar EPS' : 'Nueva EPS'}</h3>
+              <button onClick={() => setShowEpsModal(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleSaveEps} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre de la EPS</label>
+                <input autoFocus type="text" value={epsName} onChange={(e) => setEpsName(e.target.value.toUpperCase())} className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none uppercase" placeholder="Ej: SALUD TOTAL" required />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button type="button" onClick={() => setShowEpsModal(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-xl">Cancelar</button>
                 <button type="submit" className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-bold shadow-md shadow-primary-200"><Save className="w-4 h-4" /> Guardar</button>
               </div>
             </form>

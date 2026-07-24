@@ -14,8 +14,6 @@ const Login = lazy(() => import('./components/auth/Login'));
 const ForgotPassword = lazy(() => import('./components/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./components/auth/ResetPassword'));
 const ChangePassword = lazy(() => import('./components/auth/ChangePassword'));
-const LiquidacionNomina = lazy(() => import('./components/nomina/LiquidacionNomina'));
-const HistorialNomina = lazy(() => import('./components/nomina/HistorialNomina'));
 const Configuracion = lazy(() => import('./components/configuracion/Configuracion'));
 
 // Componente de carga
@@ -71,14 +69,6 @@ function App() {
             <Route
               path="/configuracion/cambiar-password"
               element={<ChangePassword />}
-            />
-            <Route
-              path="/nomina/liquidar"
-              element={<LiquidacionNomina />}
-            />
-            <Route
-              path="/nomina/historial"
-              element={<HistorialNomina />}
             />
             <Route
               path="/configuracion"
