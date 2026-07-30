@@ -1,3 +1,5 @@
+import logoVE from "../assets/VE-sin-fondo.png";
+
 const exportImport = {
   /**
    * Genera un PDF premium con la lista de empleados                                              
@@ -9,17 +11,17 @@ const exportImport = {
       return;
     }
     const doc = new jsPDF("l", "mm", "a4");
-
     const primaryColor = [37, 99, 235];
     const today = new Date().toLocaleDateString();
 
+    doc.addImage(logoVE, "PNG", 250, 8, 28, 6);
     doc.setFontSize(20);
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.text("REPORTE GENERAL DE EMPLEADOS", 14, 20);
 
     doc.setFontSize(12);
     doc.setTextColor(100);
-    doc.text("Gestión Humana", 14, 28);
+    doc.text("Gestión Humana VE", 14, 28);
     doc.text(`Fecha de generación: ${today}`, 14, 34);
 
     doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -40,6 +42,8 @@ const exportImport = {
       emp.fondo_pension || "-",
       emp.estado ? "Activo" : "Inactivo",
     ]);
+
+
 
     doc.autoTable({
       startY: 45,
@@ -335,7 +339,7 @@ const exportImport = {
                 
               return {
                 cedula: row[idx.cedula]
-                  ? row[idx.cedula].toString().trim().split('.')[0]
+                  ? row[idx.cedula].toString().trim().split(/[.,]/)[0].replace(/\D/g, '')
                   : "",
                 nombre_completo: row[idx.nombre]
                   ? row[idx.nombre].toString().trim()
@@ -347,12 +351,13 @@ const exportImport = {
                 eps: row[idx.eps] || "",
                 fondo_pension: row[idx.fondo] || "",
                 celular: row[idx.celular]
-                  ? row[idx.celular].toString().trim().split('.')[0]
+                  ? row[idx.celular].toString().trim().split(/[.,]/)[0].replace(/\D/g, '')
                   : "",
                 telefono_contacto: row[idx.emergencia]
                   ? row[idx.emergencia].toString().trim().split('.')[0]
                   : "", 
                 parentesco: row[idx.parentesco] || "",
+                parentesco_otro: "",   // ← AQUÍ, línea nueva
                 correo_electronico: row[idx.correo]
                   ? row[idx.correo].toString().trim()
                   : "",

@@ -1,5 +1,5 @@
-const esCedulaValida  = (v) => /^\d{6,12}$/.test(String(v).trim());
-const esCelularValido = (v) => /^\d{7,15}$/.test(String(v).trim());
+const esCedulaValida  = (v) => /^\d{10}$/.test(String(v).trim());
+const esCelularValido = (v) => /^\d{10}$/.test(String(v).trim());
 const esCorreoValido = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).trim());
 
 // Validación estricta: detecta fechas con formato correcto pero inexistentes (ej: 30/02)
@@ -54,9 +54,15 @@ const CAMPOS_OPCIONALES = [
   'eps',
   'fondo_pension',
   'correo_electronico',
-  'contacto_emergencia',
+  'contacto_emergencia','telefono_contacto',
   'parentesco',
 ];
+
+const PARENTESCOS_FIJOS = [   // ← agregar aquí, a este nivel
+  'ABUELA', 'MADRE', 'ABUELO', 'PADRE', 'HERMANO',
+  'TIO', 'HERMANA', 'PRIMA', 'TÍA', 'AMIGO', 'AMIGA', 'PAREJA'
+];
+
 
 export const validarRegistros = (registros, empleadosExistentes = []) => {
   const errores = [];
@@ -65,13 +71,19 @@ export const validarRegistros = (registros, empleadosExistentes = []) => {
   // Duplicados dentro del archivo
   const cedulasArchivo = new Map();
   const correosArchivo = new Map();
-
+  const nombresArchivo = new Map(); 
+  
   // Duplicados contra la BD
   const cedulasBD = new Set(empleadosExistentes.map(e => String(e.cedula).trim()));
   const correosBD = new Set(
     empleadosExistentes
       .filter(e => e.correo_electronico)
       .map(e => String(e.correo_electronico).trim().toLowerCase())
+  );
+  const nombresBD = new Set( // ← NUEVO
+    empleadosExistentes
+      .filter(e => e.nombre_completo)
+      .map(e => String(e.nombre_completo).trim().toUpperCase())
   );
 
   registros.forEach((reg, i) => {
@@ -87,7 +99,7 @@ export const validarRegistros = (registros, empleadosExistentes = []) => {
     });
 
     // 2. Cédula
-    const cedula = String(reg.cedula ?? '').trim().split('.')[0];
+    const cedula = String(reg.cedula ?? '').trim().split(/[.,]/)[0].replace(/\D/g, '');
 
     if (cedula && !esCedulaValida(cedula)) {
       errFila.push(`Cédula "${cedula}" inválida — solo dígitos, entre 6 y 12 caracteres`);
@@ -118,11 +130,51 @@ export const validarRegistros = (registros, empleadosExistentes = []) => {
       }
     }
 
+    // 3.5. Nombre completo  
+    const nombre = String(reg.nombre_completo ?? '').trim().toUpperCase();
+ 
+    if (nombre) {
+      if (nombresArchivo.has(nombre)) {
+        errFila.push(`Nombre "${nombre}" duplicado en el archivo — ya aparece en la fila ${nombresArchivo.get(nombre)}`);
+      } else if (nombresBD.has(nombre)) {
+        errFila.push(`Nombre "${nombre}" ya está registrado en el sistema`);
+      } else {
+        nombresArchivo.set(nombre, fila);
+      }
+    }
+
     // 4. Celular
-    const celular = String(reg.celular ?? '').trim().split('.')[0];
+    const celular = String(reg.celular ?? '').trim().split(/[.,]/)[0].replace(/\D/g, '');
 
     if (celular && !esCelularValido(celular)) {
       errFila.push(`Celular "${celular}" inválido — solo dígitos, sin puntos, comas ni símbolos`);
+    }
+
+    // 4.5. Teléfono de contacto de emergencia (opcional, pero si viene debe ser válido)
+    const telefonoContacto = String(reg.telefono_contacto ?? '').trim().split(/[.,]/)[0].replace(/\D/g, '');
+
+    if (reg.telefono_contacto && telefonoContacto && !esCelularValido(telefonoContacto)) {
+      errFila.push(`Teléfono de contacto de emergencia "${reg.telefono_contacto}" inválido — debe tener exactamente 10 dígitos`);
+    }
+
+    // 4.6. Parentesco — si no coincide con la lista fija, se reclasifica como "Otr@"
+    const parentescoOriginal = String(reg.parentesco ?? '').trim();
+
+    if (parentescoOriginal) {
+      const coincide = PARENTESCOS_FIJOS.some(p => p.toUpperCase() === parentescoOriginal.toUpperCase());
+
+      if (coincide) {
+        // Normalizar a la forma exacta de la lista fija
+        reg.parentesco = PARENTESCOS_FIJOS.find(p => p.toUpperCase() === parentescoOriginal.toUpperCase());
+        reg.parentesco_otro = null;
+      } else {
+        // No coincide → tratarlo como "Otr@" y guardar el valor real en parentesco_otro
+        reg.parentesco = 'Otr@';
+        reg.parentesco_otro = parentescoOriginal.toUpperCase();
+      }
+    } else {
+      reg.parentesco = null;
+      reg.parentesco_otro = null;
     }
 
     // 5. Fechas

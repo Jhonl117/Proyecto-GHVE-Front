@@ -166,6 +166,17 @@ const EditarEmpleado = () => {
     setSaving(true);
     setFormErrors({});
 
+    const limpiar = (valor) => {
+      if (valor == null) return null;
+      if (typeof valor !== "string") return valor;
+
+      const texto = valor.trim();
+
+      return texto === "" || texto === "NO ESPECIFICADO"
+        ? null
+        : texto;
+    };
+
     const empleadoData = {
       cedula,
       nombre_completo: nombre_completo?.toUpperCase(),
@@ -173,10 +184,10 @@ const EditarEmpleado = () => {
       fecha_nacimiento,
       celular,
       correo_electronico,
-      contacto_emergencia: contacto_emergencia?.toUpperCase(),
-      parentesco,
+      contacto_emergencia: limpiar(contacto_emergencia)?.toUpperCase(),
+      parentesco: limpiar(parentesco),
       parentesco_otro: parentesco?.toUpperCase(),
-      telefono_contacto,
+      telefono_contacto: limpiar(telefono_contacto),
       cargo,
       empresa,
       eps,

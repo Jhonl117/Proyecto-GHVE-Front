@@ -50,9 +50,9 @@ const Login = () => {
                         {/* Header */}
                         <div className="text-center mb-10">
                             <div className="w-20 h-20 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary-200 transform -rotate-6">
-                                <span className="text-white font-black text-4xl transform rotate-6">V</span>
+                                <span className="text-white font-black text-4xl transform rotate-6">VE</span>
                             </div>
-                            <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestión Humana</h1>
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestión Humana VE</h1>
                             <p className="text-gray-500">Gestión de Empleados - Acceso Administrativo</p>
                         </div>
 
